@@ -1,8 +1,8 @@
 import { submitSafety } from '../api';
 
-export default function SafetyButton({ token }: { token: string }) {
+export default function SafetyButton() {
   const send = async (level: 'red' | 'yellow' | 'green') => {
-    await submitSafety(token, level);
+    await submitSafety(level);
     alert(`Safety signal sent: ${level.toUpperCase()}`);
   };
 
