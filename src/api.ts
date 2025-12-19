@@ -1,5 +1,4 @@
 import {
-  WorldState,
   SessionInfo,
   CharacterSummary,
   CharacterSheet,
@@ -36,15 +35,18 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
+// Characters
 export const fetchCharacters = async () =>
   (await call<{ characters: CharacterSummary[] }>('/companion/characters')).characters;
 
 export const fetchCharacter = async (id: string) =>
   (await call<{ character: CharacterSheet }>(`/companion/characters/${id}`)).character;
 
+// XP
 export const requestXpSpend = (input: {
   characterId: string;
-  type: string;
+  kind: 'skill' | 'attribute' | 'discipline' | 'blood_potency';
+  key: string;
   current: number;
   reason: string;
 }) =>
