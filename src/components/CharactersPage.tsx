@@ -2,32 +2,31 @@ import { useEffect, useState } from 'react';
 import { fetchCharacter, fetchCharacters } from '../api';
 import type { CharacterSummary, CharacterSheet } from '../types';
 
-export default function CharactersPage({ token }: { token: string }) {
+export default function CharactersPage() {
   const [list, setList] = useState<CharacterSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheet, setSheet] = useState<CharacterSheet | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchCharacters(token)
+    fetchCharacters()
       .then(setList)
       .catch((e) => setError(e.message));
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     if (!selectedId) {
       setSheet(null);
       return;
     }
-    fetchCharacter(token, selectedId)
+    fetchCharacter(selectedId)
       .then(setSheet)
       .catch((e) => setError(e.message));
-  }, [token, selectedId]);
+  }, [selectedId]);
 
   return (
     <div style={{ marginTop: 12 }}>
       <h2>Characters</h2>
-
       {error && <div style={{ marginBottom: 12 }}>Error: {error}</div>}
 
       <div style={{ display: 'flex', gap: 16 }}>
@@ -38,9 +37,7 @@ export default function CharactersPage({ token }: { token: string }) {
             <ul>
               {list.map((c) => (
                 <li key={c.character_id} style={{ marginBottom: 8 }}>
-                  <button onClick={() => setSelectedId(c.character_id)}>
-                    {c.name}
-                  </button>
+                  <button onClick={() => setSelectedId(c.character_id)}>{c.name}</button>
                   <div style={{ fontSize: 12, opacity: 0.8 }}>
                     {c.clan ? c.clan : 'Unknown clan'}
                     {c.concept ? ` — ${c.concept}` : ''}
