@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { WorldState, SessionInfo } from '../types';
+
 import ArcList from './ArcList';
 import ClockList from './ClockList';
 import PressurePanel from './PressurePanel';
@@ -8,6 +9,7 @@ import NavTabs, { TabKey } from './NavTabs';
 import CharactersPage from './CharactersPage';
 import CoteriesPage from './CoteriesPage';
 import AdminPage from './AdminPage';
+import SafetyButton from './SafetyButton';
 
 export default function WorldDashboard({
   world,
@@ -27,17 +29,28 @@ export default function WorldDashboard({
 
   return (
     <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <div>
           <h1 style={{ margin: 0 }}>Companion</h1>
           <div style={{ opacity: 0.8 }}>
-            Role: <strong>{session.role}</strong> • SI Heat: <strong>{world.heat}</strong>
+            Role: <strong>{session.role}</strong> • SI Heat:{' '}
+            <strong>{world.heat}</strong>
           </div>
         </div>
         <button onClick={onLogout}>Logout</button>
       </div>
 
-      <NavTabs tab={tab} onChange={setTab} showAdmin={showAdmin} />
+      <NavTabs
+        tab={tab}
+        onChange={setTab}
+        showAdmin={showAdmin}
+      />
 
       {tab === 'world' && (
         <>
@@ -58,6 +71,9 @@ export default function WorldDashboard({
           onWorldUpdate={onWorldUpdate}
         />
       )}
+
+      {/* Always-available player safety control */}
+      <SafetyButton token={token} />
     </div>
   );
 }
