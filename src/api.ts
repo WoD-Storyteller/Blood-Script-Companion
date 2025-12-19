@@ -10,216 +10,131 @@ import {
 
 const API_BASE = 'http://localhost:3000';
 
-async function authed<T>(
-  path: string,
-  token: string,
-  init?: RequestInit,
-): Promise<T> {
+async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
+    credentials: 'include',
     headers: {
       ...(init?.headers ?? {}),
-      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });
 
-  if (!res.ok) {
-    throw new Error(`Request failed: ${path}`);
-  }
-
+  if (!res.ok) throw new Error(`Request failed: ${path}`);
   return res.json();
 }
 
-/* ─────────────────────────────
-   Session / World
-───────────────────────────── */
-
-export async function fetchMe(token: string): Promise<SessionInfo> {
-  return authed<SessionInfo>('/companion/me', token);
+export async function fetchMe(): Promise<SessionInfo> {
+  return call<SessionInfo>('/companion/me');
 }
 
-export async function fetchWorld(token: string): Promise<WorldState> {
-  return authed<WorldState>('/companion/world', token);
+export async function fetchWorld(): Promise<WorldState> {
+  return call<WorldState>('/companion/world');
 }
 
-/* ─────────────────────────────
-   Characters
-───────────────────────────── */
-
-export async function fetchCharacters(
-  token: string,
-): Promise<CharacterSummary[]> {
-  const res = await authed<{ characters: CharacterSummary[] }>(
-    '/companion/characters',
-    token,
-  );
+export async function fetchCharacters(): Promise<CharacterSummary[]> {
+  const res = await call<{ characters: CharacterSummary[] }>('/companion/characters');
   return res.characters ?? [];
 }
 
-export async function fetchCharacter(
-  token: string,
-  id: string,
-): Promise<CharacterSheet | null> {
-  const res = await authed<{ character?: CharacterSheet }>(
-    `/companion/characters/${id}`,
-    token,
-  );
+export async function fetchCharacter(id: string): Promise<CharacterSheet | null> {
+  const res = await call<{ character?: CharacterSheet }>(`/companion/characters/${id}`);
   return res.character ?? null;
 }
 
-/* ─────────────────────────────
-   Coteries
-───────────────────────────── */
-
-export async function fetchCoteries(
-  token: string,
-): Promise<CoterieSummary[]> {
-  const res = await authed<{ coteries: CoterieSummary[] }>(
-    '/companion/coteries',
-    token,
-  );
+export async function fetchCoteries(): Promise<CoterieSummary[]> {
+  const res = await call<{ coteries: CoterieSummary[] }>('/companion/coteries');
   return res.coteries ?? [];
 }
 
-export async function fetchCoterie(
-  token: string,
-  id: string,
-): Promise<CoterieDetail | null> {
-  const res = await authed<{ coterie?: CoterieDetail }>(
-    `/companion/coteries/${id}`,
-    token,
-  );
+export async function fetchCoterie(id: string): Promise<CoterieDetail | null> {
+  const res = await call<{ coterie?: CoterieDetail }>(`/companion/coteries/${id}`);
   return res.coterie ?? null;
 }
 
-/* ─────────────────────────────
-   ST / ADMIN CONTROLS
-───────────────────────────── */
+// ─────────────────────────────
+// ST/Admin
+// ─────────────────────────────
 
-export async function stSetMap(
-  token: string,
-  url: string,
-): Promise<WorldState> {
-  return authed<WorldState>('/companion/st/map', token, {
+export async function stSetMap(url: string): Promise<WorldState> {
+  return call<WorldState>('/companion/st/map', {
     method: 'POST',
     body: JSON.stringify({ url }),
   });
 }
 
-export async function stCreateClock(
-  token: string,
-  input: {
-    title: string;
-    segments: number;
-    nightly?: boolean;
-    description?: string;
-  },
-): Promise<WorldState> {
-  return authed<WorldState>('/companion/st/clock/create', token, {
+export async function stCreateClock(input: {
+  title: string;
+  segments: number;
+  nightly?: boolean;
+  description?: string;
+}): Promise<WorldState> {
+  return call<WorldState>('/companion/st/clock/create', {
     method: 'POST',
     body: JSON.stringify(input),
   });
 }
 
-export async function stTickClock(
-  token: string,
-  input: {
-    clockIdPrefix: string;
-    amount: number;
-    reason: string;
-  },
-): Promise<WorldState> {
-  return authed<WorldState>('/companion/st/clock/tick', token, {
+export async function stTickClock(input: {
+  clockIdPrefix: string;
+  amount: number;
+  reason: string;
+}): Promise<WorldState> {
+  return call<WorldState>('/companion/st/clock/tick', {
     method: 'POST',
     body: JSON.stringify(input),
   });
 }
 
-export async function stCreateArc(
-  token: string,
-  input: { title: string; synopsis?: string },
-): Promise<WorldState> {
-  return authed<WorldState>('/companion/st/arc/create', token, {
+export async function stCreateArc(input: { title: string; synopsis?: string }): Promise<WorldState> {
+  return call<WorldState>('/companion/st/arc/create', {
     method: 'POST',
     body: JSON.stringify(input),
   });
 }
 
-export async function stSetArcStatus(
-  token: string,
-  input: {
-    arcIdPrefix: string;
-    status: 'planned' | 'active' | 'completed' | 'cancelled';
-    outcome?: string;
-  },
-): Promise<WorldState> {
-  return authed<WorldState>('/companion/st/arc/status', token, {
+export async function stSetArcStatus(input: {
+  arcIdPrefix: string;
+  status: 'planned' | 'active' | 'completed' | 'cancelled';
+  outcome?: string;
+}): Promise<WorldState> {
+  return call<WorldState>('/companion/st/arc/status', {
     method: 'POST',
     body: JSON.stringify(input),
   });
 }
 
-/* ─────────────────────────────
-   AI Intents
-───────────────────────────── */
-
-export async function stListIntents(token: string): Promise<AiIntent[]> {
-  const res = await authed<{ intents: AiIntent[] }>(
-    '/companion/st/intents',
-    token,
-  );
+export async function stListIntents(): Promise<AiIntent[]> {
+  const res = await call<{ intents: AiIntent[] }>('/companion/st/intents');
   return res.intents ?? [];
 }
 
-export async function stApproveIntent(
-  token: string,
-  id: string,
-): Promise<boolean> {
-  const res = await authed<{ ok: boolean }>(
-    `/companion/st/intents/${id}/approve`,
-    token,
-    { method: 'POST' },
-  );
+export async function stApproveIntent(id: string): Promise<boolean> {
+  const res = await call<{ ok: boolean }>(`/companion/st/intents/${id}/approve`, { method: 'POST' });
   return !!res.ok;
 }
 
-export async function stRejectIntent(
-  token: string,
-  id: string,
-): Promise<boolean> {
-  const res = await authed<{ ok: boolean }>(
-    `/companion/st/intents/${id}/reject`,
-    token,
-    { method: 'POST' },
-  );
+export async function stRejectIntent(id: string): Promise<boolean> {
+  const res = await call<{ ok: boolean }>(`/companion/st/intents/${id}/reject`, { method: 'POST' });
   return !!res.ok;
 }
 
-/* ─────────────────────────────
-   SAFETY (X / N / O)
-───────────────────────────── */
+// ─────────────────────────────
+// Safety (Stoplight)
+// ─────────────────────────────
 
-export async function submitSafety(
-  token: string,
-  level: 'red' | 'yellow' | 'green',
-) {
-  return authed('/companion/safety/submit', token, {
+export async function submitSafety(level: 'red' | 'yellow' | 'green') {
+  return call('/companion/safety/submit', {
     method: 'POST',
     body: JSON.stringify({ level }),
   });
 }
 
-export async function fetchActiveSafety(token: string) {
-  const res = await authed<{ events: any[] }>(
-    '/companion/safety/active',
-    token,
-  );
+export async function fetchActiveSafety() {
+  const res = await call<{ events: any[] }>('/companion/safety/active');
   return res.events ?? [];
 }
 
-export async function resolveSafety(token: string, id: string) {
-  return authed(`/companion/safety/resolve/${id}`, token, {
-    method: 'POST',
-  });
+export async function resolveSafety(id: string) {
+  return call(`/companion/safety/resolve/${id}`, { method: 'POST' });
 }
