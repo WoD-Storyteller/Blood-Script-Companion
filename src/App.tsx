@@ -7,8 +7,28 @@ import WorldDashboard from './components/WorldDashboard';
 import { connectRealtime } from './realtime';
 import type { Socket } from 'socket.io-client';
 
+function consumeTokenFromUrl(): string | null {
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get('token');
+  if (!token) return null;
+
+  // Remove token from URL for cleanliness/security
+  url.searchParams.delete('token');
+  window.history.replaceState({}, '', url.toString());
+
+  return token;
+}
+
 export default function App() {
-  const [token, setToken] = useState<string | null>(loadToken());
+  const [token, setToken] = useState<string | null>(() => {
+    const fromUrl = consumeTokenFromUrl();
+    if (fromUrl) {
+      saveToken(fromUrl);
+      return fromUrl;
+    }
+    return loadToken();
+  });
+
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [world, setWorld] = useState<WorldState | null>(null);
   const [error, setError] = useState<string | null>(null);
