@@ -28,13 +28,19 @@ export interface WorldState {
   mapUrl?: string | null;
 }
 
+export interface SessionInfo {
+  userId: string;
+  engineId: string;
+  role: 'player' | 'st' | 'admin';
+}
+
 export interface CharacterSummary {
   character_id: string;
   name: string;
   clan?: string | null;
   concept?: string | null;
   status?: number | null;
-  user_id?: string | null; // present for ST/admin
+  user_id?: string | null;
 }
 
 export type CharacterSheet = Record<string, any>;
@@ -53,4 +59,14 @@ export interface CoterieDetail extends Record<string, any> {
     clan?: string | null;
     concept?: string | null;
   }>;
+}
+
+export interface AiIntent {
+  intent_id: string;
+  actor_type: 'npc' | 'faction';
+  actor_id: string;
+  intent_type: string;
+  payload: any;
+  status: 'proposed' | 'approved' | 'rejected' | 'executed';
+  created_at: string;
 }
