@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { loadToken, saveToken, clearToken } from './auth';
 import { fetchWorld, fetchMe } from './api';
 import { WorldState, SessionInfo } from './types';
 import Login from './components/Login';
@@ -7,61 +6,38 @@ import WorldDashboard from './components/WorldDashboard';
 import { connectRealtime } from './realtime';
 import type { Socket } from 'socket.io-client';
 
-function consumeTokenFromUrl(): string | null {
-  const url = new URL(window.location.href);
-  const token = url.searchParams.get('token');
-  if (!token) return null;
-
-  // Remove token from URL for cleanliness/security
-  url.searchParams.delete('token');
-  window.history.replaceState({}, '', url.toString());
-
-  return token;
-}
+const API_BASE = 'http://localhost:3000';
 
 export default function App() {
-  const [token, setToken] = useState<string | null>(() => {
-    const fromUrl = consumeTokenFromUrl();
-    if (fromUrl) {
-      saveToken(fromUrl);
-      return fromUrl;
-    }
-    return loadToken();
-  });
-
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [world, setWorld] = useState<WorldState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
-  useEffect(() => {
-    if (!token) return;
+  const load = async () => {
+    try {
+      const me = await fetchMe();
+      setSession(me);
 
-    fetchMe(token)
-      .then(setSession)
-      .catch((e) => {
-        setError(e.message);
-        clearToken();
-        setToken(null);
-      });
-  }, [token]);
+      const w = await fetchWorld();
+      setWorld(w);
 
-  useEffect(() => {
-    if (!token) return;
-
-    fetchWorld(token)
-      .then(setWorld)
-      .catch((e) => {
-        setError(e.message);
-        clearToken();
-        setToken(null);
-      });
-  }, [token]);
+      setError(null);
+    } catch (e: any) {
+      setSession(null);
+      setWorld(null);
+      setError(e.message);
+    }
+  };
 
   useEffect(() => {
-    if (!token) return;
+    load();
+  }, []);
 
-    const socket = connectRealtime(token);
+  useEffect(() => {
+    if (!session) return;
+
+    const socket = connectRealtime();
     socketRef.current = socket;
 
     socket.on('world', (payload: any) => {
@@ -70,8 +46,8 @@ export default function App() {
 
     socket.on('error', (payload: any) => {
       setError(payload?.error ?? 'Realtime error');
-      clearToken();
-      setToken(null);
+      setSession(null);
+      setWorld(null);
     });
 
     return () => {
@@ -80,36 +56,29 @@ export default function App() {
       } catch {}
       socketRef.current = null;
     };
-  }, [token]);
+  }, [session]);
 
-  if (!token) {
-    return (
-      <Login
-        onLogin={(t) => {
-          saveToken(t);
-          setToken(t);
-        }}
-      />
-    );
+  if (!session) {
+    return <Login />;
   }
 
-  if (error) {
+  if (error && !world) {
     return <div style={{ padding: 24 }}>Error: {error}</div>;
   }
 
-  if (!world || !session) {
+  if (!world) {
     return <div style={{ padding: 24 }}>Loading…</div>;
   }
 
   return (
     <WorldDashboard
       world={world}
-      token={token}
       session={session}
       onWorldUpdate={(w) => setWorld(w)}
-      onLogout={() => {
-        clearToken();
-        setToken(null);
+      onLogout={async () => {
+        await fetch(`${API_BASE}/auth/discord/logout`, { credentials: 'include' });
+        setSession(null);
+        setWorld(null);
       }}
     />
   );
