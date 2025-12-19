@@ -8,6 +8,7 @@ import {
 import V5SheetRenderer from './V5SheetRenderer';
 import V5SheetEditor from './V5SheetEditor';
 import XpSpendPanel from './XpSpendPanel';
+import { getRealtime, connectRealtime } from '../realtime';
 
 export default function CharactersPage() {
   const [list, setList] = useState<any[]>([]);
@@ -26,19 +27,62 @@ export default function CharactersPage() {
     }
   };
 
+  const refreshSelectedSheet = async (id: string) => {
+    try {
+      const s = await fetchCharacter(id);
+      setSheet(s);
+      setEditSheet(null);
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
   useEffect(() => {
     refreshList();
+    // Ensure socket exists for this page’s listeners
+    connectRealtime();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!selectedId) return;
-    fetchCharacter(selectedId)
-      .then((s) => {
-        setSheet(s);
-        setEditSheet(null);
-      })
-      .catch((e) => setError(e.message));
+    refreshSelectedSheet(selectedId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
+
+  // Realtime subscriptions
+  useEffect(() => {
+    const sock = getRealtime();
+    if (!sock) return;
+
+    const onCharUpdated = (payload: any) => {
+      const cid = payload?.characterId;
+      if (!cid) return;
+
+      // If the currently viewed character was updated, refresh it
+      if (selectedId && String(cid) === String(selectedId)) {
+        refreshSelectedSheet(selectedId);
+      }
+
+      // Also refresh list (active star / name / etc.)
+      refreshList();
+    };
+
+    const onActiveChanged = (payload: any) => {
+      // Always refresh list so ⭐ updates immediately
+      refreshList();
+    };
+
+    sock.on('character_updated', onCharUpdated);
+    sock.on('active_character_changed', onActiveChanged);
+
+    return () => {
+      try {
+        sock.off('character_updated', onCharUpdated);
+        sock.off('active_character_changed', onActiveChanged);
+      } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
   if (!selectedId) return <p>No character selected.</p>;
@@ -56,8 +100,12 @@ export default function CharactersPage() {
             </button>
             <button
               onClick={async () => {
-                await setActiveCharacter(c.character_id);
-                await refreshList();
+                try {
+                  await setActiveCharacter(c.character_id);
+                  await refreshList();
+                } catch (e: any) {
+                  setError(e.message);
+                }
               }}
             >
               Set Active
@@ -71,11 +119,16 @@ export default function CharactersPage() {
           <>
             <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
               <button onClick={() => setEditSheet({ ...sheet })}>Edit</button>
+              <button
+                onClick={async () => {
+                  if (selectedId) await refreshSelectedSheet(selectedId);
+                }}
+              >
+                Refresh
+              </button>
             </div>
 
             <V5SheetRenderer sheet={sheet} />
-
-            {/* XP Spend requests (applied after ST approval) */}
             <XpSpendPanel characterId={selectedId} sheet={sheet} />
           </>
         )}
@@ -86,9 +139,13 @@ export default function CharactersPage() {
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
               <button
                 onClick={async () => {
-                  await updateCharacterSheet(selectedId, editSheet);
-                  setSheet(editSheet);
-                  setEditSheet(null);
+                  try {
+                    await updateCharacterSheet(selectedId, editSheet);
+                    setSheet(editSheet);
+                    setEditSheet(null);
+                  } catch (e: any) {
+                    setError(e.message);
+                  }
                 }}
               >
                 Save
