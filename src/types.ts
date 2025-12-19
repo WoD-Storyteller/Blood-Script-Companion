@@ -27,3 +27,30 @@ export interface WorldState {
   heat: number;
   mapUrl?: string | null;
 }
+
+export interface CharacterSummary {
+  character_id: string;
+  name: string;
+  clan?: string | null;
+  concept?: string | null;
+  status?: number | null;
+  user_id?: string | null; // present for ST/admin
+}
+
+export type CharacterSheet = Record<string, any>;
+
+export interface CoterieSummary {
+  coterie_id: string;
+  name: string;
+  type?: string | null;
+  domain?: string | null;
+}
+
+export interface CoterieDetail extends Record<string, any> {
+  members?: Array<{
+    character_id: string;
+    name?: string | null;
+    clan?: string | null;
+    concept?: string | null;
+  }>;
+}
