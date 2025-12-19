@@ -25,4 +25,5 @@ export interface WorldState {
   clocks: Clock[];
   pressure: Pressure[];
   heat: number;
+  mapUrl?: string | null;
 }
