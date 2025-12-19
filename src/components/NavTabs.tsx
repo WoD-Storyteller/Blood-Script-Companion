@@ -1,11 +1,13 @@
-export type TabKey = 'world' | 'characters' | 'coteries';
+export type TabKey = 'world' | 'characters' | 'coteries' | 'admin';
 
 export default function NavTabs({
   tab,
   onChange,
+  showAdmin,
 }: {
   tab: TabKey;
   onChange: (t: TabKey) => void;
+  showAdmin: boolean;
 }) {
   const btn = (key: TabKey, label: string) => (
     <button
@@ -25,6 +27,7 @@ export default function NavTabs({
       {btn('world', 'World')}
       {btn('characters', 'Characters')}
       {btn('coteries', 'Coteries')}
+      {showAdmin && btn('admin', 'Admin')}
     </div>
   );
 }
