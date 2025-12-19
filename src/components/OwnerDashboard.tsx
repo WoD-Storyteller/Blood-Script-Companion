@@ -11,25 +11,29 @@ type Engine = {
   name: string;
   banned: boolean;
   banned_reason?: string;
-  banned_at?: string;
+
+  red_total: number;
+  red_resolved: number;
+  red_unresolved: number;
+
+  yellow_total: number;
+  yellow_resolved: number;
+  yellow_unresolved: number;
+
+  green_total: number;
 };
 
 export default function OwnerDashboard() {
   const [engines, setEngines] = useState<Engine[]>([]);
   const [selected, setSelected] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const load = async () => {
     try {
-      setLoading(true);
       const res = await listEngines();
       setEngines(res.engines || []);
-      setError(null);
     } catch (e: any) {
       setError(e.message || 'Failed to load engines');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -42,7 +46,6 @@ export default function OwnerDashboard() {
       <h2>Owner Dashboard</h2>
 
       {error && <div style={{ color: 'red' }}>{error}</div>}
-      {loading && <div>Loading…</div>}
 
       <table
         style={{
@@ -55,6 +58,7 @@ export default function OwnerDashboard() {
           <tr>
             <th align="left">Engine</th>
             <th align="left">Status</th>
+            <th align="left">Safety</th>
             <th align="left">Actions</th>
           </tr>
         </thead>
@@ -65,12 +69,16 @@ export default function OwnerDashboard() {
               <td>
                 {e.banned ? (
                   <span style={{ color: 'red' }}>
-                    BANNED
-                    {e.banned_reason ? ` — ${e.banned_reason}` : ''}
+                    BANNED {e.banned_reason ? `— ${e.banned_reason}` : ''}
                   </span>
                 ) : (
                   <span style={{ color: 'green' }}>Active</span>
                 )}
+              </td>
+              <td style={{ fontSize: 14 }}>
+                <div>🔴 Red: {e.red_total} (✔ {e.red_resolved} / ⏳ {e.red_unresolved})</div>
+                <div>🟡 Yellow: {e.yellow_total} (✔ {e.yellow_resolved} / ⏳ {e.yellow_unresolved})</div>
+                <div>🟢 Green: {e.green_total}</div>
               </td>
               <td>
                 <button
