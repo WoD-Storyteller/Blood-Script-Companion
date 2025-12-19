@@ -1,13 +1,8 @@
-// FULL FILE — replaces api.ts
-
 import {
   WorldState,
   SessionInfo,
   CharacterSummary,
   CharacterSheet,
-  CoterieSummary,
-  CoterieDetail,
-  AiIntent,
 } from './types';
 
 const API_BASE = 'http://localhost:3000';
@@ -27,7 +22,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (method !== 'GET') {
     if (!csrfToken) await ensureSession();
-    if (csrfToken) headers['x-csrf-token'] = csrfToken;
+    headers['x-csrf-token'] = csrfToken;
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -41,15 +36,28 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
-/* existing exports omitted for brevity — assume unchanged */
+export const fetchCharacters = async () =>
+  (await call<{ characters: CharacterSummary[] }>('/companion/characters')).characters;
 
-export async function rollDice(input: {
-  pool: number;
-  hunger?: number;
-  label?: string;
-}) {
-  return call('/companion/dice/roll', {
+export const fetchCharacter = async (id: string) =>
+  (await call<{ character: CharacterSheet }>(`/companion/characters/${id}`)).character;
+
+export const requestXpSpend = (input: {
+  characterId: string;
+  type: string;
+  current: number;
+  reason: string;
+}) =>
+  call('/companion/xp/spend', {
     method: 'POST',
     body: JSON.stringify(input),
   });
-}
+
+export const fetchPendingXp = async () =>
+  (await call<{ pending: any[] }>('/companion/xp/pending')).pending;
+
+export const approveXp = (xpId: string) =>
+  call('/companion/xp/approve', {
+    method: 'POST',
+    body: JSON.stringify({ xpId }),
+  });
