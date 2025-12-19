@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadToken, saveToken, clearToken } from './auth';
-import { fetchWorld } from './api';
-import { WorldState } from './types';
+import { fetchWorld, fetchMe } from './api';
+import { WorldState, SessionInfo } from './types';
 import Login from './components/Login';
 import WorldDashboard from './components/WorldDashboard';
 import { connectRealtime } from './realtime';
@@ -9,9 +9,22 @@ import type { Socket } from 'socket.io-client';
 
 export default function App() {
   const [token, setToken] = useState<string | null>(loadToken());
+  const [session, setSession] = useState<SessionInfo | null>(null);
   const [world, setWorld] = useState<WorldState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+
+    fetchMe(token)
+      .then(setSession)
+      .catch((e) => {
+        setError(e.message);
+        clearToken();
+        setToken(null);
+      });
+  }, [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -64,14 +77,16 @@ export default function App() {
     return <div style={{ padding: 24 }}>Error: {error}</div>;
   }
 
-  if (!world) {
-    return <div style={{ padding: 24 }}>Loading world…</div>;
+  if (!world || !session) {
+    return <div style={{ padding: 24 }}>Loading…</div>;
   }
 
   return (
     <WorldDashboard
       world={world}
       token={token}
+      session={session}
+      onWorldUpdate={(w) => setWorld(w)}
       onLogout={() => {
         clearToken();
         setToken(null);
