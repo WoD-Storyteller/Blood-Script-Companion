@@ -13,13 +13,11 @@ import SafetyButton from './SafetyButton';
 
 export default function WorldDashboard({
   world,
-  token,
   session,
   onWorldUpdate,
   onLogout,
 }: {
   world: WorldState;
-  token: string;
   session: SessionInfo;
   onWorldUpdate: (w: WorldState) => void;
   onLogout: () => void;
@@ -29,28 +27,17 @@ export default function WorldDashboard({
 
   return (
     <div style={{ padding: 24 }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ margin: 0 }}>Companion</h1>
           <div style={{ opacity: 0.8 }}>
-            Role: <strong>{session.role}</strong> • SI Heat:{' '}
-            <strong>{world.heat}</strong>
+            Role: <strong>{session.role}</strong> • SI Heat: <strong>{world.heat}</strong>
           </div>
         </div>
         <button onClick={onLogout}>Logout</button>
       </div>
 
-      <NavTabs
-        tab={tab}
-        onChange={setTab}
-        showAdmin={showAdmin}
-      />
+      <NavTabs tab={tab} onChange={setTab} showAdmin={showAdmin} />
 
       {tab === 'world' && (
         <>
@@ -61,19 +48,13 @@ export default function WorldDashboard({
         </>
       )}
 
-      {tab === 'characters' && <CharactersPage token={token} />}
+      {tab === 'characters' && <CharactersPage />}
 
-      {tab === 'coteries' && <CoteriesPage token={token} />}
+      {tab === 'coteries' && <CoteriesPage />}
 
-      {tab === 'admin' && showAdmin && (
-        <AdminPage
-          token={token}
-          onWorldUpdate={onWorldUpdate}
-        />
-      )}
+      {tab === 'admin' && showAdmin && <AdminPage onWorldUpdate={onWorldUpdate} />}
 
-      {/* Always-available player safety control */}
-      <SafetyButton token={token} />
+      <SafetyButton />
     </div>
   );
 }
