@@ -13,10 +13,8 @@ import {
 import SafetyDashboard from './SafetyDashboard';
 
 export default function AdminPage({
-  token,
   onWorldUpdate,
 }: {
-  token: string;
   onWorldUpdate: (w: WorldState) => void;
 }) {
   const [mapUrl, setMapUrl] = useState('');
@@ -43,7 +41,7 @@ export default function AdminPage({
 
   const refreshIntents = async () => {
     try {
-      const rows = await stListIntents(token);
+      const rows = await stListIntents();
       setIntents(rows);
     } catch (e: any) {
       setError(e.message);
@@ -52,20 +50,14 @@ export default function AdminPage({
 
   useEffect(() => {
     refreshIntents();
-  }, [token]);
+  }, []);
 
   return (
     <div style={{ marginTop: 12 }}>
       <h2>Admin / Storyteller</h2>
       {error && <div style={{ marginBottom: 12 }}>Error: {error}</div>}
 
-      <div
-        style={{
-          display: 'grid',
-          gap: 16,
-          gridTemplateColumns: '1fr 1fr',
-        }}
-      >
+      <div style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr 1fr' }}>
         <section style={{ padding: 12, border: '1px solid #ddd' }}>
           <h3>Map</h3>
           <input
@@ -78,7 +70,7 @@ export default function AdminPage({
             style={{ marginTop: 8 }}
             onClick={async () => {
               try {
-                const w = await stSetMap(token, mapUrl);
+                const w = await stSetMap(mapUrl);
                 onWorldUpdate(w);
               } catch (e: any) {
                 setError(e.message);
@@ -121,7 +113,7 @@ export default function AdminPage({
             style={{ marginTop: 8 }}
             onClick={async () => {
               try {
-                const w = await stCreateClock(token, {
+                const w = await stCreateClock({
                   title: clockTitle,
                   segments: clockSegments,
                   nightly: clockNightly,
@@ -163,7 +155,7 @@ export default function AdminPage({
             style={{ marginTop: 8 }}
             onClick={async () => {
               try {
-                const w = await stTickClock(token, {
+                const w = await stTickClock({
                   clockIdPrefix: tickIdPrefix,
                   amount: tickAmount,
                   reason: tickReason,
@@ -196,10 +188,7 @@ export default function AdminPage({
             style={{ marginTop: 8 }}
             onClick={async () => {
               try {
-                const w = await stCreateArc(token, {
-                  title: arcTitle,
-                  synopsis: arcSynopsis || undefined,
-                });
+                const w = await stCreateArc({ title: arcTitle, synopsis: arcSynopsis || undefined });
                 onWorldUpdate(w);
                 setArcTitle('');
                 setArcSynopsis('');
@@ -221,10 +210,7 @@ export default function AdminPage({
           placeholder="Arc ID prefix"
           style={{ width: '100%', marginBottom: 6 }}
         />
-        <select
-          value={arcStatus}
-          onChange={(e) => setArcStatus(e.target.value as any)}
-        >
+        <select value={arcStatus} onChange={(e) => setArcStatus(e.target.value as any)}>
           <option value="planned">planned</option>
           <option value="active">active</option>
           <option value="completed">completed</option>
@@ -240,7 +226,7 @@ export default function AdminPage({
           style={{ marginTop: 8 }}
           onClick={async () => {
             try {
-              const w = await stSetArcStatus(token, {
+              const w = await stSetArcStatus({
                 arcIdPrefix,
                 status: arcStatus,
                 outcome: arcOutcome || undefined,
@@ -258,6 +244,7 @@ export default function AdminPage({
       <section style={{ marginTop: 24 }}>
         <h3>AI Intents</h3>
         <button onClick={refreshIntents}>Refresh</button>
+
         {intents.length === 0 ? (
           <p>No intents.</p>
         ) : (
@@ -265,20 +252,13 @@ export default function AdminPage({
             {intents.map((i) => (
               <li key={i.intent_id} style={{ marginBottom: 12 }}>
                 <strong>{i.intent_type}</strong> — {i.status}
-                <pre
-                  style={{
-                    whiteSpace: 'pre-wrap',
-                    background: '#111',
-                    color: '#eee',
-                    padding: 8,
-                  }}
-                >
+                <pre style={{ whiteSpace: 'pre-wrap', background: '#111', color: '#eee', padding: 8 }}>
                   {JSON.stringify(i.payload, null, 2)}
                 </pre>
                 <button
                   disabled={i.status !== 'proposed'}
                   onClick={async () => {
-                    await stApproveIntent(token, i.intent_id);
+                    await stApproveIntent(i.intent_id);
                     refreshIntents();
                   }}
                 >
@@ -287,7 +267,7 @@ export default function AdminPage({
                 <button
                   disabled={i.status !== 'proposed'}
                   onClick={async () => {
-                    await stRejectIntent(token, i.intent_id);
+                    await stRejectIntent(i.intent_id);
                     refreshIntents();
                   }}
                 >
@@ -300,7 +280,7 @@ export default function AdminPage({
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <SafetyDashboard token={token} />
+        <SafetyDashboard />
       </section>
     </div>
   );
