@@ -22,7 +22,9 @@ export default function WorldDashboard({
   onWorldUpdate: (w: WorldState) => void;
   onLogout: () => void;
 }) {
-  const showAdmin = session.role === 'st' || session.role === 'admin';
+  const showAdmin = session.role === 'st' ||
+session.role === 'admin' ||
+(await moderatorsService.isModerator(client, session.engine_id, session.user_id))
   const [tab, setTab] = useState<TabKey>('world');
 
   return (
