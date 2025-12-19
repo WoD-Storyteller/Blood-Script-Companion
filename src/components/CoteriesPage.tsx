@@ -2,32 +2,31 @@ import { useEffect, useState } from 'react';
 import { fetchCoterie, fetchCoteries } from '../api';
 import type { CoterieSummary, CoterieDetail } from '../types';
 
-export default function CoteriesPage({ token }: { token: string }) {
+export default function CoteriesPage() {
   const [list, setList] = useState<CoterieSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CoterieDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchCoteries(token)
+    fetchCoteries()
       .then(setList)
       .catch((e) => setError(e.message));
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     if (!selectedId) {
       setDetail(null);
       return;
     }
-    fetchCoterie(token, selectedId)
+    fetchCoterie(selectedId)
       .then(setDetail)
       .catch((e) => setError(e.message));
-  }, [token, selectedId]);
+  }, [selectedId]);
 
   return (
     <div style={{ marginTop: 12 }}>
       <h2>Coteries</h2>
-
       {error && <div style={{ marginBottom: 12 }}>Error: {error}</div>}
 
       <div style={{ display: 'flex', gap: 16 }}>
