@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { WorldState } from '../types';
+import { WorldState, SessionInfo } from '../types';
 import ArcList from './ArcList';
 import ClockList from './ClockList';
 import PressurePanel from './PressurePanel';
@@ -7,16 +7,22 @@ import MapView from './MapView';
 import NavTabs, { TabKey } from './NavTabs';
 import CharactersPage from './CharactersPage';
 import CoteriesPage from './CoteriesPage';
+import AdminPage from './AdminPage';
 
 export default function WorldDashboard({
   world,
   token,
+  session,
+  onWorldUpdate,
   onLogout,
 }: {
   world: WorldState;
   token: string;
+  session: SessionInfo;
+  onWorldUpdate: (w: WorldState) => void;
   onLogout: () => void;
 }) {
+  const showAdmin = session.role === 'st' || session.role === 'admin';
   const [tab, setTab] = useState<TabKey>('world');
 
   return (
@@ -25,13 +31,13 @@ export default function WorldDashboard({
         <div>
           <h1 style={{ margin: 0 }}>Companion</h1>
           <div style={{ opacity: 0.8 }}>
-            Second Inquisition Heat: <strong>{world.heat}</strong>
+            Role: <strong>{session.role}</strong> • SI Heat: <strong>{world.heat}</strong>
           </div>
         </div>
         <button onClick={onLogout}>Logout</button>
       </div>
 
-      <NavTabs tab={tab} onChange={setTab} />
+      <NavTabs tab={tab} onChange={setTab} showAdmin={showAdmin} />
 
       {tab === 'world' && (
         <>
@@ -45,6 +51,13 @@ export default function WorldDashboard({
       {tab === 'characters' && <CharactersPage token={token} />}
 
       {tab === 'coteries' && <CoteriesPage token={token} />}
+
+      {tab === 'admin' && showAdmin && (
+        <AdminPage
+          token={token}
+          onWorldUpdate={onWorldUpdate}
+        />
+      )}
     </div>
   );
 }
