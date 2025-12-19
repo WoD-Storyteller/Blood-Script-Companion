@@ -2,6 +2,7 @@ import { WorldState } from '../types';
 import ArcList from './ArcList';
 import ClockList from './ClockList';
 import PressurePanel from './PressurePanel';
+import MapView from './MapView';
 
 export default function WorldDashboard({
   world,
@@ -13,8 +14,14 @@ export default function WorldDashboard({
   return (
     <div style={{ padding: 24 }}>
       <button onClick={onLogout}>Logout</button>
+
       <h1>World State</h1>
-      <p>Second Inquisition Heat: <strong>{world.heat}</strong></p>
+      <p>
+        Second Inquisition Heat: <strong>{world.heat}</strong>
+      </p>
+
+      <MapView mapUrl={world.mapUrl} />
+
       <ArcList arcs={world.arcs} />
       <ClockList clocks={world.clocks} />
       <PressurePanel pressure={world.pressure} />
