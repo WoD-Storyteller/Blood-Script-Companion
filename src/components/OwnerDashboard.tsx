@@ -1,12 +1,22 @@
 import { useEffect, useState } from 'react';
-import { listEngines, banEngine, unbanEngine, issueStrike } from '../api/owner';
+import {
+  listEngines,
+  banEngine,
+  unbanEngine,
+  issueStrike,
+  listAppeals,
+  resolveAppeal,
+} from '../api/owner';
 
 export default function OwnerDashboard() {
   const [engines, setEngines] = useState<any[]>([]);
+  const [appeals, setAppeals] = useState<any[]>([]);
 
   const load = async () => {
-    const res = await listEngines();
-    setEngines(res.engines || []);
+    const e = await listEngines();
+    const a = await listAppeals();
+    setEngines(e.engines || []);
+    setAppeals(a.appeals || []);
   };
 
   useEffect(() => {
@@ -17,94 +27,52 @@ export default function OwnerDashboard() {
     <div style={{ padding: 24 }}>
       <h2>Owner Dashboard</h2>
 
+      {/* APPEALS */}
+      <h3>Appeals</h3>
       <table width="100%" style={{ borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            <th align="left">Engine</th>
-            <th align="left">Safety</th>
-            <th align="left">Strikes</th>
-            <th align="left">Actions</th>
+            <th>Engine</th>
+            <th>Submitted By</th>
+            <th>Message</th>
+            <th>Status</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
-          {engines.map((e) => {
-            const danger = e.has_unresolved_red;
-            const warning = !danger && e.has_unresolved_yellow;
-
-            return (
-              <tr
-                key={e.engine_id}
-                style={{
-                  borderTop: '1px solid #333',
-                  background: danger
-                    ? '#3b0000'
-                    : warning
-                    ? '#332400'
-                    : 'transparent',
-                }}
-              >
-                <td>
-                  {e.name}
-                  {e.banned && (
-                    <div style={{ color: 'red', fontSize: 12 }}>
-                      🚫 {e.banned_reason || 'BANNED'}
-                    </div>
-                  )}
-                </td>
-
-                <td>
-                  🔴 {e.red_unresolved}/{e.red_total} &nbsp;
-                  🟡 {e.yellow_unresolved}/{e.yellow_total}
-                </td>
-
-                <td>
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <span key={i} style={{ opacity: i < e.strike_count ? 1 : 0.3 }}>
-                      ⚠️
-                    </span>
-                  ))}
-                </td>
-
-                <td>
+          {appeals.map((a) => (
+            <tr key={a.appeal_id} style={{ borderTop: '1px solid #333' }}>
+              <td>{a.engine_id}</td>
+              <td>{a.display_name}</td>
+              <td style={{ maxWidth: 400 }}>{a.message}</td>
+              <td>{a.resolved ? 'Resolved' : 'Open'}</td>
+              <td>
+                {!a.resolved && (
                   <button
                     onClick={async () => {
-                      const reason = prompt('Strike reason') || 'Safety violation';
-                      await issueStrike(e.engine_id, reason);
+                      const resolutionReason =
+                        prompt('Resolution reason') || 'Appeal reviewed';
+                      const ownerNotes =
+                        prompt('Owner notes (private)') || '';
+                      const unban = confirm(
+                        'Unban engine as part of this resolution?',
+                      );
+
+                      await resolveAppeal(
+                        a.appeal_id,
+                        resolutionReason,
+                        ownerNotes,
+                        unban,
+                      );
                       await load();
                     }}
                   >
-                    Issue Strike
+                    Resolve
                   </button>
-
-                  {!e.banned && (
-                    <button
-                      style={{ marginLeft: 8 }}
-                      onClick={async () => {
-                        const reason =
-                          prompt('Ban reason') || 'Manual ban';
-                        await banEngine(e.engine_id, reason);
-                        await load();
-                      }}
-                    >
-                      Ban
-                    </button>
-                  )}
-
-                  {e.banned && (
-                    <button
-                      style={{ marginLeft: 8 }}
-                      onClick={async () => {
-                        await unbanEngine(e.engine_id);
-                        await load();
-                      }}
-                    >
-                      Unban
-                    </button>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
