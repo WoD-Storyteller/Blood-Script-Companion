@@ -3,41 +3,47 @@ const API_BASE = 'http://localhost:3000';
 async function request(path: string, options: RequestInit = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     ...options,
   });
 
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(t || res.statusText);
-  }
-
+  if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
-export async function listEngines() {
-  return request('/owner/engines');
-}
+export const listEngines = () => request('/owner/engines');
+export const listAppeals = () => request('/engine/appeals');
 
-export async function banEngine(engineId: string, reason: string) {
-  return request('/owner/ban-engine', {
+export const banEngine = (engineId: string, reason: string) =>
+  request('/owner/ban-engine', {
     method: 'POST',
     body: JSON.stringify({ engineId, reason }),
   });
-}
 
-export async function unbanEngine(engineId: string) {
-  return request('/owner/unban-engine', {
+export const unbanEngine = (engineId: string) =>
+  request('/owner/unban-engine', {
     method: 'POST',
     body: JSON.stringify({ engineId }),
   });
-}
 
-export async function inspectEngine(engineId: string) {
-  return request('/owner/engine', {
+export const issueStrike = (engineId: string, reason: string) =>
+  request('/owner/issue-strike', {
     method: 'POST',
-    body: JSON.stringify({ engineId }),
+    body: JSON.stringify({ engineId, reason }),
   });
-}
+
+export const resolveAppeal = (
+  appealId: string,
+  resolutionReason: string,
+  ownerNotes: string,
+  unban: boolean,
+) =>
+  request('/engine/appeals/resolve', {
+    method: 'POST',
+    body: JSON.stringify({
+      appealId,
+      resolutionReason,
+      ownerNotes,
+      unban,
+    }),
+  });
