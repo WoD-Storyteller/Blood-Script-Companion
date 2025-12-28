@@ -1,62 +1,67 @@
-import { useState } from 'react';
-import { WorldState, SessionInfo } from '../types';
+import { useEffect, useState } from 'react';
+import { moderatorsService } from '../services/moderators.service';
+import { useSession } from '../hooks/useSession';
+import { useDbClient } from '../hooks/useDbClient';
 
-import ArcList from './ArcList';
-import ClockList from './ClockList';
-import PressurePanel from './PressurePanel';
-import MapView from './MapView';
-import NavTabs, { TabKey } from './NavTabs';
-import CharactersPage from './CharactersPage';
-import CoteriesPage from './CoteriesPage';
-import AdminPage from './AdminPage';
-import SafetyButton from './SafetyButton';
+type TabKey = 'world' | 'characters' | 'coteries' | 'admin';
 
-export default function WorldDashboard({
-  world,
-  session,
-  onWorldUpdate,
-  onLogout,
-}: {
-  world: WorldState;
-  session: SessionInfo;
-  onWorldUpdate: (w: WorldState) => void;
-  onLogout: () => void;
-}) {
-  const showAdmin = session.role === 'st' ||
-session.role === 'admin' ||
-(await moderatorsService.isModerator(client, session.engine_id, session.user_id))
+export default function WorldDashboard() {
+  const { session } = useSession();
+  const client = useDbClient();
+
+  const [isModerator, setIsModerator] = useState(false);
+  const [loadingAdmin, setLoadingAdmin] = useState(true);
   const [tab, setTab] = useState<TabKey>('world');
 
-  return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ margin: 0 }}>Companion</h1>
-          <div style={{ opacity: 0.8 }}>
-            Role: <strong>{session.role}</strong> • SI Heat: <strong>{world.heat}</strong>
-          </div>
-        </div>
-        <button onClick={onLogout}>Logout</button>
-      </div>
+  const isStOrAdmin =
+    session.role === 'st' || session.role === 'admin';
 
-      <NavTabs tab={tab} onChange={setTab} showAdmin={showAdmin} />
+  useEffect(() => {
+    let mounted = true;
 
-      {tab === 'world' && (
-        <>
-          <MapView mapUrl={world.mapUrl} />
-          <ArcList arcs={world.arcs} />
-          <ClockList clocks={world.clocks} />
-          <PressurePanel pressure={world.pressure} />
-        </>
-      )}
+    async function checkModerator() {
+      if (!client || !session) {
+        if (mounted) {
+          setIsModerator(false);
+          setLoadingAdmin(false);
+        }
+        return;
+      }
 
-      {tab === 'characters' && <CharactersPage />}
+      if (isStOrAdmin) {
+        if (mounted) {
+          setIsModerator(true);
+          setLoadingAdmin(false);
+        }
+        return;
+      }
 
-      {tab === 'coteries' && <CoteriesPage />}
+      try {
+        const result = await moderatorsService.isModerator(
+          client,
+          session.engine_id,
+          session.user_id,
+        );
 
-      {tab === 'admin' && showAdmin && <AdminPage onWorldUpdate={onWorldUpdate} />}
+        if (mounted) {
+          setIsModerator(Boolean(result));
+        }
+      } catch {
+        if (mounted) {
+          setIsModerator(false);
+        }
+      } finally {
+        if (mounted) {
+          setLoadingAdmin(false);
+        }
+      }
+    }
 
-      <SafetyButton />
-    </div>
-  );
-}
+    checkModerator();
+
+    return () => {
+      mounted = false;
+    };
+  }, [client, session, isStOrAdmin]);
+
+  const showAdmin = !loading
