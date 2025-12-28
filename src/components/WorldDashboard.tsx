@@ -65,3 +65,10 @@ export default function WorldDashboard() {
   }, [client, session, isStOrAdmin]);
 
   const showAdmin = !loading
+
+return (
+    <div className="world-dashboard">
+      {/* existing JSX */}
+    </div>
+  );
+}
