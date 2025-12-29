@@ -4,12 +4,13 @@ import WorldDashboard from './components/WorldDashboard';
 import OwnerDashboard from './components/OwnerDashboard';
 import AppealPage from './components/AppealPage';
 import { fetchMe, fetchWorld } from './api';
+import type { SessionInfo, WorldState } from './types';
 
 const OWNER_ID = import.meta.env.VITE_BOT_OWNER_DISCORD_ID;
 
 export default function App() {
-  const [session, setSession] = useState<any | null>(null);
-  const [world, setWorld] = useState<any | null>(null);
+  const [session, setSession] = useState<SessionInfo | null>(null);
+  const [world, setWorld] = useState<WorldState | null>(null);
 
   useEffect(() => {
     (async () => {

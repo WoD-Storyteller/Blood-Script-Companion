@@ -11,23 +11,23 @@ async function request(path: string, options: RequestInit = {}) {
   return res.json();
 }
 
-export const listEngines = () => request('/owner/engines');
-export const listAppeals = () => request('/engine/appeals');
+export const listEngines = () => request('/companion/owner/engines');
+export const listAppeals = () => request('/companion/engine/appeals');
 
 export const banEngine = (engineId: string, reason: string) =>
-  request('/owner/ban-engine', {
+  request('/companion/owner/ban-engine', {
     method: 'POST',
     body: JSON.stringify({ engineId, reason }),
   });
 
 export const unbanEngine = (engineId: string) =>
-  request('/owner/unban-engine', {
+  request('/companion/owner/unban-engine', {
     method: 'POST',
     body: JSON.stringify({ engineId }),
   });
 
 export const issueStrike = (engineId: string, reason: string) =>
-  request('/owner/issue-strike', {
+  request('/companion/owner/issue-strike', {
     method: 'POST',
     body: JSON.stringify({ engineId, reason }),
   });
@@ -38,7 +38,7 @@ export const resolveAppeal = (
   ownerNotes: string,
   unban: boolean,
 ) =>
-  request('/engine/appeals/resolve', {
+  request('/companion/engine/appeals/resolve', {
     method: 'POST',
     body: JSON.stringify({
       appealId,
