@@ -29,9 +29,11 @@ export interface WorldState {
 }
 
 export interface SessionInfo {
-  userId: string;
-  engineId: string;
+  user_id: string;
+  engine_id: string;
+  discord_user_id?: string;
   role: 'player' | 'st' | 'admin';
+  csrfToken?: string | null;
 }
 
 export interface CharacterSummary {

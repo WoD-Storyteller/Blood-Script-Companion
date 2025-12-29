@@ -1,16 +1,12 @@
 import { useState } from 'react';
+import { submitAppeal } from '../api/appeals';
 
 export default function AppealPage() {
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
 
   const submit = async () => {
-    await fetch('/engine/appeals', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message }),
-    });
+    await submitAppeal(message);
     setSent(true);
   };
 
