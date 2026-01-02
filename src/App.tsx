@@ -5,7 +5,22 @@ import OwnerDashboard from './components/OwnerDashboard';
 import AppealPage from './components/AppealPage';
 import { fetchMe, fetchWorld } from './api';
 import type { SessionInfo, WorldState } from './types';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import AppShell from './components/layout/AppShell';
+import WorldView from './components/world/WorldView';
 
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppShell>
+        <Routes>
+          <Route path="/" element={<WorldView />} />
+          {/* Add routes incrementally */}
+        </Routes>
+      </AppShell>
+    </BrowserRouter>
+  );
+}
 const OWNER_ID = import.meta.env.VITE_BOT_OWNER_DISCORD_ID;
 
 export default function App() {
