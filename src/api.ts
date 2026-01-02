@@ -8,12 +8,23 @@ import {
   AiIntent,
 } from './types';
 
-const API_BASE = 'http://localhost:3000';
+/**
+ * IMPORTANT:
+ * - Frontend MUST talk to NGINX, not the Engine directly
+ * - NGINX proxies /api → Engine
+ * - This avoids CORS entirely (same-origin)
+ */
+const API_BASE = '/api';
+
 let csrfToken: string | null = null;
 
 async function ensureSession(): Promise<SessionInfo> {
-  const res = await fetch(`${API_BASE}/companion/me`, { credentials: 'include' });
+  const res = await fetch(`${API_BASE}/companion/me`, {
+    credentials: 'include',
+  });
+
   if (!res.ok) throw new Error('Not authenticated');
+
   const data = await res.json();
   csrfToken = data.csrfToken ?? null;
   return data;
@@ -21,11 +32,14 @@ async function ensureSession(): Promise<SessionInfo> {
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const method = init?.method ?? 'GET';
-  const headers: any = { 'Content-Type': 'application/json' };
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
 
   if (method !== 'GET') {
     if (!csrfToken) await ensureSession();
-    headers['x-csrf-token'] = csrfToken;
+    if (csrfToken) headers['x-csrf-token'] = csrfToken;
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -35,11 +49,18 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
     credentials: 'include',
   });
 
-  if (!res.ok) throw new Error(`Request failed: ${path}`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Request failed ${res.status}: ${text}`);
+  }
+
   return res.json();
 }
 
-// Session + world
+/* ======================
+   Session + World
+   ====================== */
+
 export const fetchMe = () => call<SessionInfo>('/companion/me');
 
 export const fetchWorld = async () => {
@@ -47,12 +68,18 @@ export const fetchWorld = async () => {
   return data.world ?? data;
 };
 
-// Characters
+/* ======================
+   Characters
+   ====================== */
+
 export const fetchCharacters = async () =>
-  (await call<{ characters: CharacterSummary[] }>('/companion/characters')).characters;
+  (await call<{ characters: CharacterSummary[] }>('/companion/characters'))
+    .characters;
 
 export const fetchCharacter = async (id: string) =>
-  (await call<{ character: CharacterSheet }>(`/companion/characters/${id}`)).character;
+  (await call<{ character: CharacterSheet }>(
+    `/companion/characters/${id}`,
+  )).character;
 
 export const setActiveCharacter = (characterId: string) =>
   call('/companion/characters/active', {
@@ -60,31 +87,47 @@ export const setActiveCharacter = (characterId: string) =>
     body: JSON.stringify({ characterId }),
   });
 
-export const updateCharacterSheet = (characterId: string, sheet: CharacterSheet) =>
+export const updateCharacterSheet = (
+  characterId: string,
+  sheet: CharacterSheet,
+) =>
   call(`/companion/characters/${characterId}`, {
     method: 'POST',
     body: JSON.stringify({ sheet }),
   });
 
-// Coteries
+/* ======================
+   Coteries
+   ====================== */
+
 export const fetchCoteries = async () => {
-  const data = await call<{ coteries?: CoterieSummary[] }>('/companion/coteries');
+  const data = await call<{ coteries?: CoterieSummary[] }>(
+    '/companion/coteries',
+  );
   return data.coteries ?? data;
 };
 
 export const fetchCoterie = async (id: string) => {
-  const data = await call<{ coterie?: CoterieDetail }>(`/companion/coteries/${id}`);
+  const data = await call<{ coterie?: CoterieDetail }>(
+    `/companion/coteries/${id}`,
+  );
   return data.coterie ?? data;
 };
 
-// Dice
+/* ======================
+   Dice
+   ====================== */
+
 export const rollDice = (input: { pool: number; label: string }) =>
   call('/companion/dice/roll', {
     method: 'POST',
     body: JSON.stringify(input),
   });
 
-// Safety
+/* ======================
+   Safety
+   ====================== */
+
 export const submitSafety = (level: 'red' | 'yellow' | 'green') =>
   call('/companion/safety', {
     method: 'POST',
@@ -92,7 +135,9 @@ export const submitSafety = (level: 'red' | 'yellow' | 'green') =>
   });
 
 export const fetchActiveSafety = async () => {
-  const data = await call<{ events?: any[] }>('/companion/safety/active');
+  const data = await call<{ events?: any[] }>(
+    '/companion/safety/active',
+  );
   return data.events ?? data;
 };
 
@@ -102,7 +147,10 @@ export const resolveSafety = (eventId: string) =>
     body: JSON.stringify({ eventId }),
   });
 
-// XP
+/* ======================
+   XP
+   ====================== */
+
 export const requestXpSpend = (input: {
   characterId: string;
   kind: 'skill' | 'attribute' | 'discipline' | 'blood_potency';
@@ -116,7 +164,8 @@ export const requestXpSpend = (input: {
   });
 
 export const fetchPendingXp = async () =>
-  (await call<{ pending: any[] }>('/companion/xp/pending')).pending;
+  (await call<{ pending: any[] }>('/companion/xp/pending'))
+    .pending;
 
 export const approveXp = (xpId: string) =>
   call('/companion/xp/approve', {
@@ -124,7 +173,10 @@ export const approveXp = (xpId: string) =>
     body: JSON.stringify({ xpId }),
   });
 
-// Storyteller / admin
+/* ======================
+   Storyteller / Admin
+   ====================== */
+
 export const stSetMap = (mapUrl: string) =>
   call('/companion/st/map', {
     method: 'POST',
@@ -152,7 +204,10 @@ export const stTickClock = (input: {
     body: JSON.stringify(input),
   });
 
-export const stCreateArc = (input: { title: string; synopsis?: string }) =>
+export const stCreateArc = (input: {
+  title: string;
+  synopsis?: string;
+}) =>
   call('/companion/st/arcs', {
     method: 'POST',
     body: JSON.stringify(input),
@@ -169,7 +224,9 @@ export const stSetArcStatus = (input: {
   });
 
 export const stListIntents = async () => {
-  const data = await call<{ intents?: AiIntent[] }>('/companion/st/intents');
+  const data = await call<{ intents?: AiIntent[] }>(
+    '/companion/st/intents',
+  );
   return data.intents ?? data;
 };
 
