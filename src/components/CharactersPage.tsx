@@ -10,73 +10,6 @@ import V5SheetEditor from './V5SheetEditor';
 import XpSpendPanel from './XpSpendPanel';
 import { getRealtime, connectRealtime } from '../realtime';
 
-/* =========================
-   Hunger Meter (V5 style)
-   ========================= */
-function HungerMeter({ hunger }: { hunger: number }) {
-  const max = 5;
-
-  return (
-    <div>
-      <div className="text-sm uppercase tracking-wide text-blood-crimson mb-1">
-        Hunger
-      </div>
-
-      <div className="flex gap-2">
-        {Array.from({ length: max }).map((_, i) => {
-          const filled = i < hunger;
-
-          return (
-            <div
-              key={i}
-              className={`
-                w-4 h-4 rounded-full border
-                ${filled
-                  ? 'bg-blood-red border-blood-crimson shadow-[0_0_6px_rgba(180,0,0,0.7)]'
-                  : 'bg-blood-dark border-blood-red/40'}
-              `}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* =========================
-   Blood Pool Bar
-   ========================= */
-function BloodPoolBar({
-  current,
-  max,
-}: {
-  current: number;
-  max: number;
-}) {
-  const percent = Math.max(0, Math.min(100, (current / max) * 100));
-
-  return (
-    <div className="mt-3">
-      <div className="flex justify-between text-xs uppercase text-blood-bone mb-1">
-        <span>Blood</span>
-        <span>
-          {current} / {max}
-        </span>
-      </div>
-
-      <div className="h-2 rounded bg-blood-dark overflow-hidden border border-blood-red/40">
-        <div
-          className="h-full bg-gradient-to-r from-blood-red to-blood-crimson transition-all"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-/* =========================
-   Characters Page
-   ========================= */
 export default function CharactersPage() {
   const [list, setList] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -109,43 +42,30 @@ export default function CharactersPage() {
   useEffect(() => {
     refreshList();
     connectRealtime();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (!selectedId) return;
-    refreshSelectedSheet(selectedId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (selectedId) {
+      refreshSelectedSheet(selectedId);
+    }
   }, [selectedId]);
 
-  // Realtime updates
   useEffect(() => {
     const sock = getRealtime();
     if (!sock) return;
 
-    const onCharUpdated = (payload: any) => {
-      const cid = payload?.characterId;
-      if (!cid) return;
-
-      if (selectedId && String(cid) === String(selectedId)) {
-        refreshSelectedSheet(selectedId);
-      }
-
+    const onCharUpdated = () => {
       refreshList();
-    };
-
-    const onActiveChanged = () => {
-      refreshList();
+      if (selectedId) refreshSelectedSheet(selectedId);
     };
 
     sock.on('character_updated', onCharUpdated);
-    sock.on('active_character_changed', onActiveChanged);
+    sock.on('active_character_changed', onCharUpdated);
 
     return () => {
       sock.off('character_updated', onCharUpdated);
-      sock.off('active_character_changed', onActiveChanged);
+      sock.off('active_character_changed', onCharUpdated);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
   if (!selectedId) {
@@ -154,7 +74,7 @@ export default function CharactersPage() {
 
   return (
     <div className="flex gap-6 mt-4">
-      {/* LEFT COLUMN — CHARACTER LIST */}
+      {/* LEFT — CHARACTER LIST */}
       <div className="w-1/3 bg-blood-ash rounded-xl p-4 border border-blood-red/40">
         <h3 className="text-lg font-semibold mb-4 text-blood-crimson">
           Characters
@@ -175,7 +95,8 @@ export default function CharactersPage() {
                   selectedId === c.character_id
                     ? 'bg-blood-dark border border-blood-crimson'
                     : 'hover:bg-blood-dark/60'
-                }`}
+                }
+              `}
             >
               <button
                 onClick={() => setSelectedId(c.character_id)}
@@ -205,22 +126,10 @@ export default function CharactersPage() {
         </div>
       </div>
 
-      {/* RIGHT COLUMN — SHEET */}
+      {/* RIGHT — CHARACTER SHEET */}
       <div className="w-2/3 bg-blood-ash rounded-xl p-4 border border-blood-red/40">
         {!editSheet && sheet && (
           <>
-            {/* Hunger / Blood */}
-            <div className="mb-6 p-3 rounded-xl bg-blood-dark border border-blood-red/40">
-              <HungerMeter hunger={sheet.hunger ?? 0} />
-
-              {sheet.blood && (
-                <BloodPoolBar
-                  current={sheet.blood.current}
-                  max={sheet.blood.max}
-                />
-              )}
-            </div>
-
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => setEditSheet({ ...sheet })}
@@ -230,9 +139,7 @@ export default function CharactersPage() {
               </button>
 
               <button
-                onClick={async () => {
-                  if (selectedId) await refreshSelectedSheet(selectedId);
-                }}
+                onClick={() => refreshSelectedSheet(selectedId)}
                 className="px-3 py-1 rounded bg-blood-dark border border-blood-red/50"
               >
                 Refresh
