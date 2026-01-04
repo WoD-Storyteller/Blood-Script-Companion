@@ -1,7 +1,7 @@
 type Trait = {
   name: string;
   dots: number;
-  description?: string;
+  description: string;
 };
 
 export default function MeritsFlawsPanel({
@@ -12,57 +12,33 @@ export default function MeritsFlawsPanel({
   flaws: Trait[];
 }) {
   return (
-    <div className="mt-6 grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-2 gap-6 mb-6">
       <div>
         <h3 className="text-sm uppercase tracking-wide text-blood-crimson mb-2">
           Merits
         </h3>
-
-        <div className="space-y-2">
-          {merits.map((m) => (
-            <div
-              key={m.name}
-              className="p-2 bg-blood-dark rounded border border-blood-red/40"
-            >
-              <div className="flex justify-between">
-                <span>{m.name}</span>
-                <span>{'●'.repeat(m.dots)}</span>
-              </div>
-
-              {m.description && (
-                <p className="text-xs text-blood-bone mt-1">
-                  {m.description}
-                </p>
-              )}
+        {merits.map((m, i) => (
+          <div key={i} className="mb-2">
+            <div className="font-medium">
+              {m.name} ({m.dots})
             </div>
-          ))}
-        </div>
+            <div className="text-sm text-blood-bone">{m.description}</div>
+          </div>
+        ))}
       </div>
 
       <div>
-        <h3 className="text-sm uppercase tracking-wide text-blood-crimson mb-2">
+        <h3 className="text-sm uppercase tracking-wide text-blood-red mb-2">
           Flaws
         </h3>
-
-        <div className="space-y-2">
-          {flaws.map((f) => (
-            <div
-              key={f.name}
-              className="p-2 bg-blood-dark rounded border border-blood-red/40"
-            >
-              <div className="flex justify-between">
-                <span>{f.name}</span>
-                <span>{'●'.repeat(f.dots)}</span>
-              </div>
-
-              {f.description && (
-                <p className="text-xs text-blood-bone mt-1">
-                  {f.description}
-                </p>
-              )}
+        {flaws.map((f, i) => (
+          <div key={i} className="mb-2">
+            <div className="font-medium">
+              {f.name} ({f.dots})
             </div>
-          ))}
-        </div>
+            <div className="text-sm text-blood-bone">{f.description}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
