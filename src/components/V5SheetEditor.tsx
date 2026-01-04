@@ -1,54 +1,93 @@
 import React from 'react';
 
-export default function V5SheetEditor({
-  sheet,
+type Props = {
+  sheet: any;
+  onChange: (sheet: any) => void;
+};
+
+function AttributeRow({
+  label,
+  value,
   onChange,
 }: {
-  sheet: any;
-  onChange: (s: any) => void;
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
 }) {
-  const set = (k: string, v: any) => onChange({ ...sheet, [k]: v });
+  return (
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-sm capitalize">{label}</span>
+      <input
+        type="number"
+        min={0}
+        max={5}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-14 bg-blood-dark border border-blood-red/40 rounded px-2 py-1 text-right"
+      />
+    </div>
+  );
+}
+
+export default function V5SheetEditor({ sheet, onChange }: Props) {
+  const updateAttribute = (category: string, key: string, value: number) => {
+    const next = structuredClone(sheet);
+    next.attributes[category][key] = value;
+    onChange(next);
+  };
 
   return (
-    <div>
-      <h3>Edit Character</h3>
+    <div className="bg-blood-ash rounded-xl p-4 border border-blood-red/40 text-blood-bone">
+      <h3 className="text-lg text-blood-crimson mb-4">
+        Edit Attributes
+      </h3>
 
-      <label>Name</label>
-      <input
-        value={sheet.name ?? ''}
-        onChange={(e) => set('name', e.target.value)}
-      />
+      <div className="grid grid-cols-3 gap-6">
+        {/* PHYSICAL */}
+        <div>
+          <h4 className="text-xs uppercase mb-2">Physical</h4>
+          {Object.entries(sheet.attributes.physical).map(([k, v]) => (
+            <AttributeRow
+              key={k}
+              label={k}
+              value={v as number}
+              onChange={(n) =>
+                updateAttribute('physical', k, n)
+              }
+            />
+          ))}
+        </div>
 
-      <label>Clan</label>
-      <input
-        value={sheet.clan ?? ''}
-        onChange={(e) => set('clan', e.target.value)}
-      />
+        {/* SOCIAL */}
+        <div>
+          <h4 className="text-xs uppercase mb-2">Social</h4>
+          {Object.entries(sheet.attributes.social).map(([k, v]) => (
+            <AttributeRow
+              key={k}
+              label={k}
+              value={v as number}
+              onChange={(n) =>
+                updateAttribute('social', k, n)
+              }
+            />
+          ))}
+        </div>
 
-      <label>Concept</label>
-      <input
-        value={sheet.concept ?? ''}
-        onChange={(e) => set('concept', e.target.value)}
-      />
-
-      <label>Ambition</label>
-      <input
-        value={sheet.ambition ?? ''}
-        onChange={(e) => set('ambition', e.target.value)}
-      />
-
-      <label>Desire</label>
-      <input
-        value={sheet.desire ?? ''}
-        onChange={(e) => set('desire', e.target.value)}
-      />
-
-      <label>Notes</label>
-      <textarea
-        rows={4}
-        value={sheet.notes ?? ''}
-        onChange={(e) => set('notes', e.target.value)}
-      />
+        {/* MENTAL */}
+        <div>
+          <h4 className="text-xs uppercase mb-2">Mental</h4>
+          {Object.entries(sheet.attributes.mental).map(([k, v]) => (
+            <AttributeRow
+              key={k}
+              label={k}
+              value={v as number}
+              onChange={(n) =>
+                updateAttribute('mental', k, n)
+              }
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
