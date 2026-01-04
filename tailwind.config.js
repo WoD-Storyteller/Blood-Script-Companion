@@ -1,17 +1,30 @@
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{ts,tsx}"
-  ],
+module.exports = {
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
-      colors: {
-        blood: "#8b0000",
-        ash: "#1c1c1c",
-        parchment: "#f5f0e6"
-      }
-    }
+      keyframes: {
+        frenzy: {
+          '0%': { opacity: 0, transform: 'scale(1)' },
+          '30%': { opacity: 1 },
+          '100%': { opacity: 0, transform: 'scale(1.15)' },
+        },
+        messy: {
+          '0%': { opacity: 0 },
+          '40%': { opacity: 1 },
+          '100%': { opacity: 0 },
+        },
+        bestial: {
+          '0%': { transform: 'scale(0.6)', opacity: 0 },
+          '60%': { opacity: 0.9 },
+          '100%': { transform: 'scale(1.5)', opacity: 0 },
+        },
+      },
+      animation: {
+        frenzy: 'frenzy 1.8s ease-out',
+        messy: 'messy 0.9s ease-in-out',
+        bestial: 'bestial 1.2s ease-out',
+      },
+    },
   },
   plugins: [],
-}
+};
